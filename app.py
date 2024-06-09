@@ -21,6 +21,9 @@ if response.status_code == 200:
     # Load the modified CSV content into a DataFrame
     df = pd.read_csv(StringIO(csv_content), parse_dates=['date_posted'])
     
+    # Extract manufacturer from the 'model' column
+    df['manufacturer'] = df['model'].apply(lambda x: x.split()[0])
+
     # Now you can use df as your DataFrame
     st.header('Data viewer')
     show_manuf_1k_ads = st.checkbox('Include manufacturers with less than 1000 ads')
