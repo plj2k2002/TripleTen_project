@@ -49,11 +49,11 @@ if response.status_code == 200:
     st.header('Compare price distribution between manufacturers')
     manufac_list = sorted(df['manufacturer'].unique())
     manufacturer_1 = st.selectbox('Select manufacturer 1',
-                                  manufac_list, index=manufac_list.index('chevrolet'))
+                                  manufac_list, index=manufac_list.index('CHEVROLET'))
 
     manufacturer_2 = st.selectbox('Select manufacturer 2',
-                                  manufac_list, index=manufac_list.index('hyundai'))
-    mask_filter = (df['manufacturer'] == manufacturer_1) | (df['manufacturer'] == manufacturer_2)
+                                  manufac_list, index=manufac_list.index('HYUNDAI'))
+    mask_filter = (df['manufacturer'] == manufacturer_1.upper()) | (df['manufacturer'] == manufacturer_2.upper())
     df_filtered = df[mask_filter]
     normalize = st.checkbox('Normalize histogram', value=True)
     if normalize:
