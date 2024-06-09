@@ -26,6 +26,9 @@ if response.status_code == 200:
 
     # Convert 'model' column to all caps
     df['model'] = df['model'].str.upper()
+    
+    # Convert 'manufacturer' column to all caps
+    df['manufacturer'] = df['manufacturer'].str.upper()
 
     # Convert 'model_year' to string and remove decimal points
     df['model_year'] = df['model_year'].astype('Int64').astype(str).str.replace('.0', '')
