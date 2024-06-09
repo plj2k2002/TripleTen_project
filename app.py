@@ -5,7 +5,7 @@ import requests
 from io import StringIO
 
 # Define the raw URL of your CSV file on GitHub
-CSV_URL = 'https://raw.githubusercontent.com/plj2k2002/TripleTen_project/main/vehicles_us.csv''
+CSV_URL = 'https://raw.githubusercontent.com/plj2k2002/TripleTen_project/main/vehicles_us.csv'
 
 # Fetch the CSV content from the URL
 response = requests.get(CSV_URL)
