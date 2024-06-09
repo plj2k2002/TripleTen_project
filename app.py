@@ -24,6 +24,12 @@ if response.status_code == 200:
     # Extract manufacturer from the 'model' column
     df['manufacturer'] = df['model'].apply(lambda x: x.split()[0])
 
+    # Convert 'model' column to all caps
+    df['model'] = df['model'].str.upper()
+
+    # Convert 'model_year' to string and remove decimal points
+    df['model_year'] = df['model_year'].astype('Int64').astype(str).str.replace('.0', '')
+
     # Now you can use df as your DataFrame
     st.header('Data viewer')
     show_manuf_1k_ads = st.checkbox('Include manufacturers with less than 1000 ads')
