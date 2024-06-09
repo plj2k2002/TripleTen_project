@@ -4,7 +4,7 @@ import plotly.express as px
 
 def load_data(file_path):
     try:
-        df = pd.read_csv(file_path)
+        df = pd.read_csv("C:\Users\jonesp\Documents\TripleTen_project\vehicles_us.csv")
         return df
     except FileNotFoundError:
         st.error("File not found. Please check the file path.")
