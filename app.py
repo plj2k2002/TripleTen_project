@@ -1,76 +1,70 @@
-# Import necessary libraries
-import pandas as pd
-import plotly.express as px
-import numpy as np
-from scipy import stats
 import streamlit as st
+import pandas as pd
+import plotly_express as px
+import requests
+from io import StringIO
 
-# Title and Introduction
-st.title('Exploratory Data Analysis of Vehicle Listings')
-st.write('This app performs an exploratory data analysis (EDA) on a dataset of vehicle listings.')
+# Define the raw URL of your CSV file on GitHub
+CSV_URL = 'https://raw.githubusercontent.com/plj2k2002/TripleTen_project/main/vehicles_us.csv'
 
-# Load data
-@st.cache_data
-def load_data():
-    df = pd.read_csv('https://raw.githubusercontent.com/plj2k2002/TripleTen_project/main/vehicles_us.csv')
-    return df
+# Fetch the CSV content from the URL
+response = requests.get(CSV_URL)
+if response.status_code == 200:
+    csv_content = response.text
+    
+    # Modify the CSV content as needed
+    # For example, parse the 'date_posted' column as a date
+    csv_content = csv_content.replace('date_posted', 'date_posted', 1).replace('object', 'datetime64', 1)
+    # Convert 'model_year' to integer type
+    csv_content = csv_content.replace('model_year', 'model_year', 1).replace('float64', 'Int64', 1)
 
-df = load_data()
+    # Load the modified CSV content into a DataFrame
+    df = pd.read_csv(StringIO(csv_content), parse_dates=['date_posted'])
+    
+    # Extract manufacturer from the 'model' column
+    df['manufacturer'] = df['model'].apply(lambda x: x.split()[0])
 
-# Verify column names
-st.write('Column Names:', df.columns)
+    # Convert 'model' column to all caps
+    df['model'] = df['model'].str.upper()
+    
+    # Convert 'manufacturer' column to all caps
+    df['manufacturer'] = df['manufacturer'].str.upper()
 
-# Rename columns if necessary
-df.rename(columns={'cylinders': 'cylindres'}, inplace=True)
+    # Convert 'model_year' to string and remove decimal points
+    df['model_year'] = df['model_year'].astype('Int64').astype(str).str.replace('.0', '')
 
-# Fill missing values
-df['model_year'] = df.groupby('model')['model_year'].transform(lambda x: x.fillna(x.median()))
-df['cylindres'] = df.groupby('model')['cylindres'].transform(lambda x: x.fillna(x.median()))
-df['odometer'] = df.groupby(['model', 'model_year'])['odometer'].transform(lambda x: x.fillna(x.median()))
+    # Now you can use df as your DataFrame
+    st.header('Data viewer')
+    show_manuf_1k_ads = st.checkbox('Include manufacturers with less than 1000 ads')
+    if not show_manuf_1k_ads:
+        df = df.groupby('manufacturer').filter(lambda x: len(x) > 1000)
 
-# Remove outliers for model_year and price
-df = df[(np.abs(stats.zscore(df['model_year'].dropna())) < 3)]
-df = df[(np.abs(stats.zscore(df['price'].dropna())) < 3)]
+    st.dataframe(df)
+    st.header('Vehicle types by manufacturer')
+    st.write(px.histogram(df, x='manufacturer', color='type'))
+    st.header('Histogram of `condition` vs `model_year`')
 
-# Display statistics
-st.header('Statistics Summary')
+    st.write(px.histogram(df, x='model_year', color='condition'))
 
-st.subheader('Statistics for Price')
-st.write(df['price'].describe())
+    st.header('Compare price distribution between manufacturers')
+    manufac_list = sorted(df['manufacturer'].unique())
+    manufacturer_1 = st.selectbox('Select manufacturer 1',
+                                  manufac_list, index=manufac_list.index('CHEVROLET'))
 
-st.subheader('Statistics for Odometer')
-st.write(df['odometer'].describe())
-
-st.subheader('Statistics for Model Year')
-st.write(df['model_year'].describe())
-
-# Create visualizations with annotations for statistics
-
-# Histogram for 'price'
-fig_hist_price = px.histogram(df, x='price', title='Distribution of Price')
-mean_price = df['price'].mean()
-median_price = df['price'].median()
-fig_hist_price.add_vline(x=mean_price, line_width=3, line_dash="dash", line_color="red", annotation_text='Mean', annotation_position='top')
-fig_hist_price.add_vline(x=median_price, line_width=3, line_dash="dash", line_color="blue", annotation_text='Median', annotation_position='top')
-
-# Histogram for 'odometer'
-fig_hist_odometer = px.histogram(df, x='odometer', title='Distribution of Odometer')
-mean_odometer = df['odometer'].mean()
-median_odometer = df['odometer'].median()
-fig_hist_odometer.add_vline(x=mean_odometer, line_width=3, line_dash="dash", line_color="red", annotation_text='Mean', annotation_position='top')
-fig_hist_odometer.add_vline(x=median_odometer, line_width=3, line_dash="dash", line_color="blue", annotation_text='Median', annotation_position='top')
-
-# Scatterplot for 'price' vs 'model_year'
-fig_scatter_price_model_year = px.scatter(df, x='model_year', y='price', title='Price vs Model Year')
-fig_scatter_price_model_year.add_hline(y=mean_price, line_width=3, line_dash="dash", line_color="red", annotation_text='Mean Price', annotation_position='top right')
-
-# Scatterplot for 'price' vs 'odometer'
-fig_scatter_price_odometer = px.scatter(df, x='odometer', y='price', title='Price vs Odometer')
-fig_scatter_price_odometer.add_hline(y=mean_price, line_width=3, line_dash="dash", line_color="red", annotation_text='Mean Price', annotation_position='top right')
-
-# Display the plots in Streamlit
-st.plotly_chart(fig_hist_price)
-st.plotly_chart(fig_hist_odometer)
-st.plotly_chart(fig_scatter_price_model_year)
-st.plotly_chart(fig_scatter_price_odometer)
-
+    manufacturer_2 = st.selectbox('Select manufacturer 2',
+                                  manufac_list, index=manufac_list.index('HYUNDAI'))
+    mask_filter = (df['manufacturer'] == manufacturer_1.upper()) | (df['manufacturer'] == manufacturer_2.upper())
+    df_filtered = df[mask_filter]
+    normalize = st.checkbox('Normalize histogram', value=True)
+    if normalize:
+        histnorm = 'percent'
+    else:
+        histnorm = None
+    st.write(px.histogram(df_filtered,
+                          x='price',
+                          nbins=30,
+                          color='manufacturer',
+                          histnorm=histnorm,
+                          barmode='overlay'))
+else:
+    st.error(f"Failed to fetch data from {CSV_URL}. Status code: {response.status_code}")
