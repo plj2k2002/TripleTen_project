@@ -10,7 +10,7 @@ st.title('Exploratory Data Analysis of Vehicle Listings')
 st.write('This app performs an exploratory data analysis (EDA) on a dataset of vehicle listings.')
 
 # Load data
-@st.cache
+@st.cache_data
 def load_data():
     df = pd.read_csv('https://raw.githubusercontent.com/plj2k2002/TripleTen_project/main/vehicles_us.csv')
     return df
