@@ -3,12 +3,22 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 from scipy import stats
+import streamlit as st
+
+# Title and Introduction
+st.title('Exploratory Data Analysis of Vehicle Listings')
+st.write('This app performs an exploratory data analysis (EDA) on a dataset of vehicle listings.')
 
 # Load data
-df = pd.read_csv('https://raw.githubusercontent.com/plj2k2002/TripleTen_project/main/vehicles_us.csv')
+@st.cache
+def load_data():
+    df = pd.read_csv('https://raw.githubusercontent.com/plj2k2002/TripleTen_project/main/vehicles_us.csv')
+    return df
+
+df = load_data()
 
 # Verify column names
-print(df.columns)
+st.write('Column Names:', df.columns)
 
 # Rename columns if necessary
 df.rename(columns={'cylinders': 'cylindres'}, inplace=True)
@@ -23,14 +33,16 @@ df = df[(np.abs(stats.zscore(df['model_year'].dropna())) < 3)]
 df = df[(np.abs(stats.zscore(df['price'].dropna())) < 3)]
 
 # Display statistics
-print("Statistics for Price:")
-print(df['price'].describe())
+st.header('Statistics Summary')
 
-print("\nStatistics for Odometer:")
-print(df['odometer'].describe())
+st.subheader('Statistics for Price')
+st.write(df['price'].describe())
 
-print("\nStatistics for Model Year:")
-print(df['model_year'].describe())
+st.subheader('Statistics for Odometer')
+st.write(df['odometer'].describe())
+
+st.subheader('Statistics for Model Year')
+st.write(df['model_year'].describe())
 
 # Create visualizations with annotations for statistics
 
@@ -56,8 +68,9 @@ fig_scatter_price_model_year.add_hline(y=mean_price, line_width=3, line_dash="da
 fig_scatter_price_odometer = px.scatter(df, x='odometer', y='price', title='Price vs Odometer')
 fig_scatter_price_odometer.add_hline(y=mean_price, line_width=3, line_dash="dash", line_color="red", annotation_text='Mean Price', annotation_position='top right')
 
-# Display the plots
-fig_hist_price.show()
-fig_hist_odometer.show()
-fig_scatter_price_model_year.show()
-fig_scatter_price_odometer.show()
+# Display the plots in Streamlit
+st.plotly_chart(fig_hist_price)
+st.plotly_chart(fig_hist_odometer)
+st.plotly_chart(fig_scatter_price_model_year)
+st.plotly_chart(fig_scatter_price_odometer)
+
